@@ -1,95 +1,4 @@
-#import relevant modules
-import urllib2
-from urllib2 import urlopen
-import re
-import cookielib
-from cookielib import CookieJar
 from itertools import combinations
-
-# Build opener and change header so we don't look like a bot
-cj = CookieJar()
-opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cj))
-opener.addheaders = [('User-agent','Mozilla5.0')]
-
-
-def main():
-    Swahili = ["ninasema", "ninaona", "wunasema", "wunaona", "anasema", 
-                    "niliona", "wanasema", "ninawaona", "nilisema", "niliwuona", 
-                    "wulisema", "wunaniona", "alisema", "waliniona", "walisema", 
-                    "wanawuona"]
-
-    Zulu = ["abafundisi", "ababazi", "umfundisi", "umbazi", "fundisa", "baza",
-            "umlimi", "umfundi", "abalimi", "abafundi", "lima", "funda"]
-
-    Turkish = ["geldim", "geldin", "geldi", "geldik", "geldiniz", "geldiler", 
-                "gelmedim", "gelmedin", "gelmedi", "gelmedik", "gelmediniz", 
-                "gelmediler", "yedim", "yedin", "yedi", "yedik", "yediniz", 
-                "yediler", "yemedim", "yemedin", "yemedi", "yemedik", "yemediniz", 
-                "yemediler"]
-
-    English = ["nation", "civilization", "civilized", "creation", "create", 
-                "nationalist", "nationalize", "socialist", "socialize", 
-                "civilize", "society", "proper", "propriety", "property", 
-                "locality", "local", "nationalization", "civil", "social",
-                "nationality", "moral", "morality"]
-
-    # Wikipedia articles in multiple languages
-    url1 = "http://en.wikipedia.org/wiki/World_War_II"
-    url2 = "http://tr.wikipedia.org/wiki/II._D%C3%BCnya_Sava%C5%9F%C4%B1"
-    url3 = "http://fr.wikipedia.org/wiki/Seconde_Guerre_mondiale"
-    url4 = "http://de.wikipedia.org/wiki/Zweiter_Weltkrieg"
-    url5 = "http://bar.wikipedia.org/wiki/Wean"
-    
-    USE_THIS_URL = url2
-
-    '''sourceCode = opener.open(USE_THIS_URL).read()
-    # Select everything marked as paragraph text
-    pattern = re.compile(r'<p>(.*)</p>')
-    # findall returns a list, select first element which is a string
-    content = " ".join(re.findall(pattern, sourceCode))
-    p = getParagraphs(cleanContent(content))
-    words, wordcount = getDictionary(theseWords)'''
-
-    with open("hikaye.txt") as fp:
-        story = " ".join(fp.readlines())
-    d, wordcount = getDictionary(story)
-
-    affixes = getAffixDict(Zulu)
-    for word in Zulu:
-        segments = possibleSegments(word)
-        ratings = {tuple(s):scoreSegmentation(list(s), affixes) for s in segments}
-        print word
-        printByMax(ratings, 5)
-        print "-------------------------------"
-        print
-
-    return affixes
-
-
-def cleanContent(text):
-    # Get rid of <HTML code between pointy brackets>
-    htmlcode = re.compile(r'<[^>]*>')
-    newtext = re.sub(htmlcode, '', text)
-    # Get rid of Wikipedia style references e.g. [184]
-    references = re.compile(r'\[\d+\]')
-    newtext = re.sub(references, '', newtext)
-    # Get rid of $#180; code - up to 4 symbols between & and ;
-    andhearts = re.compile(r'\&.{,4}\;')
-    newtext = re.sub(andhearts, '', newtext)
-    # Get rid of numbers
-    numbers = re.compile(r'\d+')
-    newtext = re.sub(numbers, '', newtext)
-    return newtext
-
-
-def getParagraphs(text):
-    '''Find all sentences using Regex and join them together to make 
-    paragraphs. Match made with English in mind, update for other languages.
-    '''
-    pattern = re.compile(r'(.*\b.?(?<!Mr|Dr|Jr|Sr)(?<!Mrs|Drs)(?<![A-Z])\.\s(?![a-z]))')
-    paragraphs = re.findall(pattern, text)
-    return "".join(paragraphs)
-
 
 def getDictionary(text):
     '''Find all word breaks marked with spaces and returns a list of each
@@ -197,9 +106,5 @@ def printByMax(dict, stopAt = None):
         if printed == stopAt:
             break
 
-
-
-if __name__ == '__main__':
-    main()
 
 
