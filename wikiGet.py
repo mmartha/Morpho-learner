@@ -3,6 +3,7 @@ import urllib2
 from urllib2 import urlopen
 import cookielib
 from cookielib import CookieJar
+import re
 
 
 # Build opener and change header so we don't look like a bot
@@ -16,3 +17,4 @@ def getContent(url):
 	pattern = re.compile(r'<p>(.*)</p>')
 	# findall returns a list, select first element which is a string
 	content = " ".join(re.findall(pattern, sourceCode))
+	return content

@@ -1,4 +1,5 @@
 from itertools import combinations
+import re
 
 def getDictionary(text):
     '''Find all word breaks marked with spaces and returns a list of each

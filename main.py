@@ -37,12 +37,12 @@ def main():
     text = wikiClean.cleanContent(content)
     words, wordcount = morpho.getDictionary(text)
 
-    affixes = getAffixDict(Zulu)
+    affixes = morpho.getAffixDict(Zulu)
     for word in Zulu:
-        segments = possibleSegments(word)
-        ratings = {tuple(s):scoreSegmentation(list(s), affixes) for s in segments}
+        segments = morpho.possibleSegments(word)
+        ratings = {tuple(s):morpho.scoreSegmentation(list(s), affixes) for s in segments}
         print word
-        printByMax(ratings, 5)
+        morpho.printByMax(ratings, 5)
         print "-------------------------------"
         print
 

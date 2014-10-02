@@ -3,7 +3,7 @@ import re
 def cleanContent(text):
     # Get rid of <HTML code between pointy brackets>
     htmlcode = re.compile(r'<[^>]*>')
-    newtext = re.sub(htmlcode, '', text)
+    newtext = re.sub(htmlcode, "", text)
     # Get rid of Wikipedia style references e.g. [184]
     references = re.compile(r'\[\d+\]')
     newtext = re.sub(references, '', newtext)
