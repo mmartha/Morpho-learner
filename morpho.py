@@ -1,24 +1,8 @@
 from itertools import combinations
 import re
 
-def getDictionary(text):
-    '''Find all word breaks marked with spaces and returns a list of each
-    unique word in the article. Also returns an int of total words (wordcount)
-    '''
-    words = {}
-    word = re.compile(r'(?!\d)\b(\S+)\b')
-    foundWords = re.findall(word, text)
-    for w in foundWords:
-        w = w.lower()
-        if w not in words.keys():
-            words[w] = 1
-        else:
-            words[w] += 1
-    wordcount = sum(words.values())
-    return words.keys(), wordcount
 
-
-def getAffixDict(words):
+def getAffixDict(words, A = 5, B = 1):
     '''Takes the words from a list and finds all possible morphemes from
     each word. Then all morphemes from all words are tallyed. Finally, each
     morpheme count is scaled by a constant so that shorter morphemes are
@@ -39,14 +23,32 @@ def getAffixDict(words):
             if len(a) < 1:
                 del affixDict[a]
             else:
-                # for Turkish use X = 10
-                # for English use X = 2-5
-                # for Swahili use X ~ 5
-                # for Zulu use X ~ 5
-                X = 4.9
-                affixDict[a] *= (1 - (1/(X*float(len(a)))))
+                # for Turkish use A = 10
+                # for English use A = 2-5
+                # for Swahili use A ~ 5
+                # for Zulu use A ~ 5
+                affixDict[a] *= (1 - (1/(A*float(len(a)**B))))
     return affixDict
 
+
+def findAB(data, solutions):
+    '''Attempt to implement 'Supervised Learning' to find best parameters, given 
+    a solution set.
+    '''
+    X = False
+    min_score = (999999, (0,0))
+    for a in range(1,20):
+        for b in range(1,5):
+            score = 0
+            mylist = [x for (x, y) in listByMax(getAffixDict(data, a, b))]
+            for i in solutions.keys():
+                for morpheme in solutions[i]:
+                    k = mylist.index(morpheme)
+                    score += (k-i)
+            if score < min_score[0]:
+                min_score = (score, (a,b))
+    return min_score[1]
+    
 
 def generatePowerSet(number):
     '''Returns the power set of the set of integers from 1 to number.'''
@@ -79,6 +81,10 @@ def possibleSegments(word):
 
 
 def scoreSegmentation(segmentationList, scoreDict):
+    '''Returns a score for a list of segments which are the possible
+    morphemes of a word. Score is the sum of each possible morpheme asstored 
+    in the 'scoreDict'
+    '''
     score = 0
     for part in segmentationList:
         if len(part) > 0:
@@ -88,24 +94,33 @@ def scoreSegmentation(segmentationList, scoreDict):
     return score
 
 
-def printByMax(dict, stopAt = None):
-    '''Prints the key, value pairs in order from highest value to lowest
+def listByMax(mydict, stopAt = None):
+    '''Returns the key, value pairs in order from highest value to lowest
     value. If stopAt has a value, only prints that many results.
     '''
-    copy = dict
+    returnlist = []
+    copy = mydict
     if stopAt == None:
-        stopAt = len(dict.keys())
+        stopAt = len(mydict.keys())
+    # 'printed' to keep track of how many top items have been found
     printed = 0
     while len(copy.values()) > 0:
         for key in copy.keys():
             if copy[key] == max(copy.values()):
-                print key, copy[key]
+                returnlist.append((key, copy[key]))
                 printed += 1
                 del copy[key]
             if printed == stopAt:
                 break
         if printed == stopAt:
             break
+    return returnlist
+
+def printByMax(mydict, stopAt = None):
+    # Prints a dictionary sorted by maximum value
+    for x, y in listByMax(mydict, stopAt = None):
+        print x, y
+
 
 
 

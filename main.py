@@ -1,52 +1,57 @@
-import wikiGet
-import wikiClean
+import wiki
 import morpho
-
-
-Swahili = ["ninasema", "ninaona", "wunasema", "wunaona", "anasema", 
-            "niliona", "wanasema", "ninawaona", "nilisema", "niliwuona", 
-            "wulisema", "wunaniona", "alisema", "waliniona", "walisema", 
-            "wanawuona"]
-
-Zulu = ["abafundisi", "ababazi", "umfundisi", "umbazi", "fundisa", "baza",
-        "umlimi", "umfundi", "abalimi", "abafundi", "lima", "funda"]
-
-Turkish = ["geldim", "geldin", "geldi", "geldik", "geldiniz", "geldiler", 
-            "gelmedim", "gelmedin", "gelmedi", "gelmedik", "gelmediniz", 
-            "gelmediler", "yedim", "yedin", "yedi", "yedik", "yediniz", 
-            "yediler", "yemedim", "yemedin", "yemedi", "yemedik", "yemediniz", 
-            "yemediler"]
-
-English = ["nation", "civilization", "civilized", "creation", "create", 
-            "nationalist", "nationalize", "socialist", "socialize", 
-            "civilize", "society", "proper", "propriety", "property", 
-            "locality", "local", "nationalization", "civil", "social",
-            "nationality", "moral", "morality"]
+from dataset import data, solutions
 
 # Wikipedia articles in multiple languages
-url1 = "http://en.wikipedia.org/wiki/World_War_II"
-url2 = "http://tr.wikipedia.org/wiki/II._D%C3%BCnya_Sava%C5%9F%C4%B1"
-url3 = "http://fr.wikipedia.org/wiki/Seconde_Guerre_mondiale"
-url4 = "http://de.wikipedia.org/wiki/Zweiter_Weltkrieg"
-url5 = "http://bar.wikipedia.org/wiki/Wean"
+english = "http://en.wikipedia.org/wiki/World_War_II"
+turkish = "http://tr.wikipedia.org/wiki/II._D%C3%BCnya_Sava%C5%9F%C4%B1"
+french = "http://fr.wikipedia.org/wiki/Seconde_Guerre_mondiale"
+german = "http://de.wikipedia.org/wiki/Zweiter_Weltkrieg"
+boarisch = "http://bar.wikipedia.org/wiki/Wean"
 
 def main():
-    # To analyze the morphology from a Wikipedia page
-    USE_THIS_URL = url2
-    content = wikiGet.getContent(USE_THIS_URL)
-    text = wikiClean.cleanContent(content)
-    words, wordcount = morpho.getDictionary(text)
 
-    affixes = morpho.getAffixDict(Zulu)
-    for word in Zulu:
+    choice = raw_input("\nEnter 1 for Data Set or 2 for Wikipedia analysis\n")
+    if int(choice) == 1:
+        # Analyze morphology from a data set
+        lang = raw_input("\nEnter Turkish, Swahili, Zulu, or English\n")
+        if lang in solutions.keys:
+            A, B = morpho.findAB(data[lang], solutions[lang])
+            affixes = morpho.getAffixDict(data[lang], A, B)
+        else:
+            affixes = morpho.getAffixDict(data[lang])
+
+        # Print all morphemes from top scored to lowest
+        morpho.printByMax(affixes)
+    else: print "Choice not recognized, try again"
+
+
+    # To analyze the morphology from a Wikipedia page
+    '''USE_THIS_URL = url2
+    content = wiki.getContent(USE_THIS_URL)
+    text = wiki.cleanContent(content)
+    words, wordcount = wiki.getDictionary(text)'''
+   
+'''
+    # Analyze morphology from a data set
+    A, B = morpho.findAB(data["Turkish"], solutions["Turkish"])
+    print 
+    print "A = ", A, "B = ", B
+    affixes = morpho.getAffixDict(data["Turkish"], A, B)
+
+    # Print all morphemes from top scored to lowest
+    morpho.printByMax(affixes)
+'''
+
+    # Print top ranked possible segmentations
+'''for word in Zulu:
         segments = morpho.possibleSegments(word)
         ratings = {tuple(s):morpho.scoreSegmentation(list(s), affixes) for s in segments}
         print word
         morpho.printByMax(ratings, 5)
         print "-------------------------------"
         print
-
-    return affixes
+'''
 
 
 if __name__ == '__main__':
