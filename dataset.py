@@ -11,7 +11,8 @@ data = {
                   "gelmedim", "gelmedin", "gelmedi", "gelmedik", "gelmediniz", 
                   "gelmediler", "yedim", "yedin", "yedi", "yedik", "yediniz", 
                   "yediler", "yemedim", "yemedin", "yemedi", "yemedik", "yemediniz", 
-                  "yemediler"],
+                  "yemediler", "yiyecegim", "gelecek", "geliyorum", "gelebiliriz", 
+                  "yiyoruz", "gelmek"],
 
       "English": ["nation", "civilization", "civilized", "creation", "create", 
                   "nationalist", "nationalize", "socialist", "socialize", 

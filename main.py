@@ -15,15 +15,16 @@ def main():
     if int(choice) == 1:
         # Analyze morphology from a data set
         lang = raw_input("\nEnter Turkish, Swahili, Zulu, or English\n")
-        if lang in solutions.keys:
+        if lang in solutions.keys():
             # If soltion set exists, attempt to find best parameters A and B
             A, B = morpho.findAB(data[lang], solutions[lang])
             affixes = morpho.getAffixDict(data[lang], A, B)
         else:
             affixes = morpho.getAffixDict(data[lang])
 
-        # Print all morphemes from top scored to lowest
-        morpho.printByMax(affixes)
+        # Print top 20 morphemes from top scored to lowest
+        morpho.printByMax(affixes, 20)
+        
     else: print "Choice not recognized, try again"
 
 

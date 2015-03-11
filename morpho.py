@@ -2,6 +2,11 @@ from itertools import combinations
 import re
 
 
+def formatWord(word):
+    '''Takes a string and adds word beginning and end symbols.'''
+    return "*"+word+"#"
+
+
 def getAffixDict(words, A = 5, B = 1):
     '''Takes the words from a list and finds all possible morphemes from
     each word. Then all morphemes from all words are tallyed. Finally, each
@@ -10,24 +15,25 @@ def getAffixDict(words, A = 5, B = 1):
     '''
     affixDict = {}
     for word in words:
-        breakups = set()
+        word = formatWord(word)
+        breakups = []
+        # First create dictionary of all possible segments
         for i in range(len(word)):
             for j in range(i, len(word)+1):
-                breakups.add(word[i:j])
+                breakups.append(word[i:j])
+        # Next tally all segments
         for b in breakups:
             if b in affixDict.keys():
                 affixDict[b] += 1
             else:
                 affixDict[b] = 1
         for a in affixDict.keys():
+            # Delete any empty entries
             if len(a) < 1:
                 del affixDict[a]
+            # Scale up score for longer segments
             else:
-                # for Turkish use A = 10
-                # for English use A = 2-5
-                # for Swahili use A ~ 5
-                # for Zulu use A ~ 5
-                affixDict[a] *= (1 - (1/(A*float(len(a)**B))))
+                affixDict[a] *= 30^(len(a))
     return affixDict
 
 
@@ -97,6 +103,7 @@ def scoreSegmentation(segmentationList, scoreDict):
 def listByMax(mydict, stopAt = None):
     '''Returns the key, value pairs in order from highest value to lowest
     value. If stopAt has a value, only prints that many results.
+    Currently uses selection sort; should be improved.
     '''
     returnlist = []
     copy = mydict
@@ -118,7 +125,7 @@ def listByMax(mydict, stopAt = None):
 
 def printByMax(mydict, stopAt = None):
     # Prints a dictionary sorted by maximum value
-    for x, y in listByMax(mydict, stopAt = None):
+    for x, y in listByMax(mydict, stopAt):
         print x, y
 
 
