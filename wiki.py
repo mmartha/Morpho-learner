@@ -44,8 +44,9 @@ def getParagraphs(text):
     return "".join(paragraphs)
 
 def getDictionary(text):
-    '''Find all word breaks marked with spaces and returns a list of each
-    unique word in the article. Also returns an int of total words (wordcount)
+    ''' Find all word breaks marked with spaces and returns a dictionary of each
+        unique word in the article with raw frequency. Also returns an int of 
+        total words (wordcount)
     '''
     words = {}
     word = re.compile(r'(?!\d)\b(\S+)\b')
@@ -57,4 +58,9 @@ def getDictionary(text):
         else:
             words[w] += 1
     wordcount = sum(words.values())
-    return words.keys(), wordcount
+    return words, wordcount
+
+def get_dataset(link):
+    content = cleanContent(getContent(link))
+    word_dict, wordcount = getDictionary(getParagraphs(content))
+    return word_dict.keys(), wordcount

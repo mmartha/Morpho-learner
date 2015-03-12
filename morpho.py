@@ -1,75 +1,63 @@
 from itertools import combinations
 import re
 
+import Graph
+
 
 def formatWord(word):
-    '''Takes a string and adds word beginning and end symbols.'''
+    ''' This takes a string and adds word beginning and end symbols.
+        * is word beginning and # is word end
+    '''
     return "*"+word+"#"
 
 
-def getAffixDict(words, A = 5, B = 1):
-    '''Takes the words from a list and finds all possible morphemes from
-    each word. Then all morphemes from all words are tallyed. Finally, each
-    morpheme count is scaled by a constant so that shorter morphemes are
-    decreased, since they are statistically more likely to be random.
+def getTotalLetters(dataset):
+    ''' Returns total number of letters in data set and the number of distinct
+        letters.
     '''
-    affixDict = {}
-    for word in words:
-        word = formatWord(word)
-        breakups = []
-        # First create dictionary of all possible segments
-        for i in range(len(word)):
-            for j in range(i, len(word)+1):
-                breakups.append(word[i:j])
-        # Next tally all segments
-        for b in breakups:
-            if b in affixDict.keys():
-                affixDict[b] += 1
-            else:
-                affixDict[b] = 1
-        for a in affixDict.keys():
-            # Delete any empty entries
-            if len(a) < 1:
-                del affixDict[a]
-            # Scale up score for longer segments
-            else:
-                affixDict[a] *= 30^(len(a))
-    return affixDict
+    letter_count = 0
+    distinct_letters = set()
+    for word in dataset:
+        for letter in word:
+            letter_count+=1
+            distinct_letters.add(letter)
+    return letter_count, len(distinct_letters)
 
 
-def findAB(data, solutions):
-    '''Attempt to implement 'Supervised Learning' to find best parameters, given 
-    a solution set.
+def possibleMorphemes(word):
+    ''' Finds all possible morphemes for a word. Stored in a set, aka a list 
+        with no repeating entries.
     '''
-    X = False
-    min_score = (999999, (0,0))
-    for a in range(1,20):
-        for b in range(1,5):
-            score = 0
-            mylist = [x for (x, y) in listByMax(getAffixDict(data, a, b))]
-            for i in solutions.keys():
-                for morpheme in solutions[i]:
-                    k = mylist.index(morpheme)
-                    score += (k-i)
-            if score < min_score[0]:
-                min_score = (score, (a,b))
-    return min_score[1]
+    breakups = set()
+    # Add beginning and end of word symbols
+    word = formatWord(word)
+    # Create dictionary of all possible segments
+    for i in range(len(word)):
+        for j in range(i, len(word)+1):
+            breakups.add(word[i:j])
+    return breakups
     
 
 def generatePowerSet(number):
-    '''Returns the power set of the set of integers from 1 to number.'''
+    ''' Returns the power set of the set of integers from 1 to number.
+        Used to divide a word into every possible segmentation.
+    '''
     powerSet = []
     for i in range(number+1):
+        # itertools.combinations
         q = combinations(range(1, number+1), i)
         for p in q:
             powerSet.append(list(p))
     return powerSet
 
 
-def possibleSegments(word):
-    '''Returns a list. Each item in the list is a list of segments, which when 
-    concatenated sequentially, should be equivalent to the original word.
+def possibleSegments(word, mode="Normal"):
+    ''' Returns a list. Each item in the list is a list of segments, which when 
+        concatenated sequentially, should be equivalent to the original word.
     '''
+    if mode == "Normal":
+        # In 'scoring' mode, segment word without beginning and end symbols
+        word = formatWord(word)
     segments = []
     for split in generatePowerSet(len(word)-1):
         # segmentation will be a list of each part, which together make 
@@ -80,54 +68,98 @@ def possibleSegments(word):
         newlist = [0]
         newlist.extend(split)
         newlist.append(len(word))
+        # create a segmentation of word between indices x and y, where x and y
+        # are all adjacent entries in newlist
         for s in range(len(newlist)-1):
             segmentation.append(word[newlist[s]:newlist[s+1]])
         segments.append(segmentation)
+    # return final list of segmentation lists
     return segments
 
 
-def scoreSegmentation(segmentationList, scoreDict):
-    '''Returns a score for a list of segments which are the possible
-    morphemes of a word. Score is the sum of each possible morpheme asstored 
-    in the 'scoreDict'
+def countMorphemes(dataset):
+    ''' Produces a dictionary of all observed morphemes as keys. Values are observed
+        frequency of morpheme with correction for shorter morphemes being more likely
+        to occur by pure chance
     '''
-    score = 0
-    for part in segmentationList:
-        if len(part) > 0:
-            score += scoreDict[part]
-    if len(segmentationList) > 0:
-        score /= len(segmentationList)
-    return score
+    freq_dict = {}
+    total_letters, distinct_letters = getTotalLetters(dataset)
+    # For each word, find all possible morphemes
+    for word in dataset:
+        morphemes = possibleMorphemes(word)
+        for m in morphemes:
+            if m not in freq_dict.keys():
+                freq_dict[m] = 1
+            else: freq_dict[m] += 1
+    for m in freq_dict.keys():
+        mcount = freq_dict[m]
+        freq_dict[m] = correct_for_length(m, mcount, total_letters, distinct_letters)
+    return freq_dict
 
 
-def listByMax(mydict, stopAt = None):
-    '''Returns the key, value pairs in order from highest value to lowest
-    value. If stopAt has a value, only prints that many results.
-    Currently uses selection sort; should be improved.
+def correct_for_length(m, mcount, total_letters, distinct_letters):
+    # Expected frequency for m is probability of occurence (based just on number 
+    # of letters in m) multiplied by total size of dataset (in letters)
+    # Returns a new value for mcount, adjusted for length of m
+    A = distinct_letters
+    expected = float(total_letters)/(A**len(m))
+    actual = mcount
+    if expected > 0.1:
+        return round((actual-expected)/expected)
+    elif expected != 0:
+        return round((actual-expected)/0.1)
+    # expected frequency should never be 0 in float, unless error
+    else: raise ZeroDivisionError("String has expected value 0: "+str(m))
+
+
+def createGraph(dataset):
+    ''' Takes a list of words, 'dataset' and returns a graph object with possible
+        morphemes as nodes, and weighted edges between each possible morpheme.
     '''
-    returnlist = []
-    copy = mydict
-    if stopAt == None:
-        stopAt = len(mydict.keys())
-    # 'printed' to keep track of how many top items have been found
-    printed = 0
-    while len(copy.values()) > 0:
-        for key in copy.keys():
-            if copy[key] == max(copy.values()):
-                returnlist.append((key, copy[key]))
-                printed += 1
-                del copy[key]
-            if printed == stopAt:
-                break
-        if printed == stopAt:
-            break
-    return returnlist
+    letter_count, distinct_letters = getTotalLetters(dataset)
+    possible_morphemes = set()
+    for word in dataset:
+        for x in possibleMorphemes(word):
+            possible_morphemes.add(x) 
+    graph = Graph.Directed_Graph(possible_morphemes)
+    for word in dataset:
+        segments_list = possibleSegments(word)
+        for segmentation in segments_list:
+            for i in range(len(segmentation)-1):
+                graph.add_edge(segmentation[i],segmentation[i+1])
+    graph = weightEdges(graph, letter_count, distinct_letters)
+    # Also weight each edge by the weight of each node it connects
+    node_dict = countMorphemes(dataset)
+    edge_dict = graph.edges()
+    for edge in graph.edges().keys():
+        start_value = edge_dict[edge]
+        value = start_value*node_dict[edge[0]]*node_dict[edge[1]]
+        graph.define_edge(edge[0], edge[1], value)
+    return graph
 
-def printByMax(mydict, stopAt = None):
-    # Prints a dictionary sorted by maximum value
-    for x, y in listByMax(mydict, stopAt):
-        print x, y
+def weightEdges(graph, letter_count, distinct_letters):
+    ''' Longer sequences of letters should receive higher weight since they are 
+        less likely occur by pure chance.
+    '''
+    for edge in graph.edges().keys():
+        value = correct_for_length(edge[1],graph.edges()[edge], letter_count, distinct_letters)
+        graph.define_edge(edge[0], edge[1], value)
+    return graph
 
 
-
-
+def scoreSegmentation(word, graph):
+    ''' Returns the highest score from a list of segments which are the possible
+        morphemes of a word. Score is the sum of each edge between two possible
+        morphemes in 'graph'.
+    '''
+    segmentations = possibleSegments(word, "scoring")
+    best_choice = (None,0)
+    edges = graph.edges()
+    for possibility in segmentations:
+        score = 0
+        for i in range(len(possibility)-1):
+            if (possibility[i], possibility[i+1]) in edges.keys():
+                score += edges[(possibility[i], possibility[i+1])]
+        if score > best_choice[1]:
+            best_choice = (possibility, score)
+    return best_choice
